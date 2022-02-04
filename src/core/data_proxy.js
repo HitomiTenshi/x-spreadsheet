@@ -345,8 +345,6 @@ export default class DataProxy {
     this.autoFilter = new AutoFilter();
     this.change = () => {};
     this.exceptRowSet = new Set();
-    this.sortedRowMap = new Map();
-    this.unsortedRowMap = new Map();
   }
 
   addValidation(mode, ref, validator) {
@@ -596,13 +594,9 @@ export default class DataProxy {
   setSelectedCellText(text, state = 'input') {
     const { autoFilter, selector, rows } = this;
     const { ri, ci } = selector;
-    let nri = ri;
-    if (this.unsortedRowMap.has(ri)) {
-      nri = this.unsortedRowMap.get(ri);
-    }
-    const oldCell = rows.getCell(nri, ci);
+    const oldCell = rows.getCell(ri, ci);
     const oldText = oldCell ? oldCell.text : '';
-    this.setCellText(nri, ci, text, state);
+    this.setCellText(ri, ci, text, state);
     // replace filter.value
     if (autoFilter.active()) {
       const filter = autoFilter.getFilter(ci);
@@ -619,11 +613,7 @@ export default class DataProxy {
 
   getSelectedCell() {
     const { ri, ci } = this.selector;
-    let nri = ri;
-    if (this.unsortedRowMap.has(ri)) {
-      nri = this.unsortedRowMap.get(ri);
-    }
-    return this.rows.getCell(nri, ci);
+    return this.rows.getCell(ri, ci);
   }
 
   xyInSelectedRect(x, y) {
@@ -779,42 +769,32 @@ export default class DataProxy {
       if (autoFilter.active()) {
         autoFilter.clear();
         this.exceptRowSet = new Set();
-        this.sortedRowMap = new Map();
-        this.unsortedRowMap = new Map();
       } else {
         autoFilter.ref = selector.range.toString();
       }
     });
   }
 
-  setAutoFilter(ci, order, operator, value) {
+  setAutoFilter(ci, order, operator, value, sheet) {
     const { autoFilter } = this;
     autoFilter.addFilter(ci, operator, value);
     autoFilter.setSort(ci, order);
-    this.resetAutoFilter();
+    this.resetAutoFilter(sheet);
   }
 
-  resetAutoFilter() {
+  resetAutoFilter(sheet) {
     const { autoFilter, rows } = this;
     if (!autoFilter.active()) return;
     const { sort } = autoFilter;
     const { rset, fset } = autoFilter.filteredRows((r, c) => rows.getCell(r, c));
     const fary = Array.from(fset);
     const oldAry = Array.from(fset);
-    if (sort) {
-      fary.sort((a, b) => {
-        if (sort.order === 'asc') return a - b;
-        if (sort.order === 'desc') return b - a;
-        return 0;
-      });
+
+    if (sort && sheet) {
+      sheet.trigger('sort', sort.ci, sort.order);
     }
+
     this.exceptRowSet = rset;
-    this.sortedRowMap = new Map();
-    this.unsortedRowMap = new Map();
-    fary.forEach((it, index) => {
-      this.sortedRowMap.set(oldAry[index], it);
-      this.unsortedRowMap.set(it, oldAry[index]);
-    });
   }
 
   deleteCell(what = 'all') {

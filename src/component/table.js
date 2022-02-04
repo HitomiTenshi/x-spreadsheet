@@ -50,21 +50,16 @@ function renderCellBorders(bboxes, translateFunc) {
 */
 
 export function renderCell(draw, data, rindex, cindex, yoffset = 0) {
-  const { sortedRowMap, rows, cols } = data;
+  const { rows, cols } = data;
   if (rows.isHide(rindex) || cols.isHide(cindex)) return;
-  let nrindex = rindex;
-  if (sortedRowMap.has(rindex)) {
-    nrindex = sortedRowMap.get(rindex);
-  }
-
-  const cell = data.getCell(nrindex, cindex);
+  const cell = data.getCell(rindex, cindex);
   if (cell === null) return;
   let frozen = false;
   if ('editable' in cell && cell.editable === false) {
     frozen = true;
   }
 
-  const style = data.getCellStyleOrDefault(nrindex, cindex);
+  const style = data.getCellStyleOrDefault(rindex, cindex);
   const dbox = getDrawBox(data, rindex, cindex, yoffset);
   dbox.bgcolor = style.bgcolor;
   if (style.border !== undefined) {
