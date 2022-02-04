@@ -791,7 +791,7 @@ export default class DataProxy {
     const oldAry = Array.from(fset);
 
     if (sort && sheet) {
-      sheet.trigger('sort', sort.ci, sort.order);
+      sheet.trigger('sort', sort.order, sort.ci);
     }
 
     this.exceptRowSet = rset;
