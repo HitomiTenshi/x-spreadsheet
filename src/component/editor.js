@@ -249,8 +249,6 @@ export default class Editor {
   }
 
   setCell(cell, validator) {
-    if (cell && cell.editable === false) return;
-
     // console.log('::', validator);
     const { el, datepicker, suggest } = this;
     el.show();
